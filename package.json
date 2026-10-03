@@ -4,6 +4,7 @@
   "description": "Pointer-anchored wheel zoom and drag-to-pan for images in the DeepSeek Harness right sidebar. Replaces the built-in image viewport.",
   "type": "module",
   "license": "MIT",
+  "author": "MYX (https://github.com/MYX-0211)",
   "homepage": "https://github.com/MYX-0211/dsh-sidebar-image-zoom#readme",
   "repository": {
     "type": "git",
