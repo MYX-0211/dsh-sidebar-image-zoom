@@ -1,0 +1,16 @@
+# Normalise line endings in the repository; check out native ones.
+* text=auto eol=lf
+
+# Windows scripts must keep CRLF so they stay runnable by the default
+# PowerShell execution defaults.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets — never touch these.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

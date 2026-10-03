@@ -1,0 +1,6 @@
+# Mounts the plugin into the DSH profile. The `id` is the profile-entry id and
+# must stay `sidebar-image-zoom`: the client half keys its renderer off it, and
+# a second row for the same package would fail the whole plugin tree at boot.
+- insert:
+    - id: sidebar-image-zoom
+      name: dsh-sidebar-image-zoom

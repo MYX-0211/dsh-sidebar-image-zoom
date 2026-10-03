@@ -1,0 +1,79 @@
+{
+  "name": "dsh-sidebar-image-zoom",
+  "version": "0.1.0",
+  "description": "Pointer-anchored wheel zoom and drag-to-pan for images in the DeepSeek Harness right sidebar. Replaces the built-in image viewport.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/MYX-0211/dsh-sidebar-image-zoom#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MYX-0211/dsh-sidebar-image-zoom.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MYX-0211/dsh-sidebar-image-zoom/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test/build-harness.mjs && node test/verify.mjs",
+    "test:build": "node test/build-harness.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "deepseek",
+    "dsh-plugin",
+    "image",
+    "image-viewer",
+    "zoom",
+    "pan"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-sidebar-documentpreview"
+      ],
+      "platform": "web"
+    },
+    "compatibility": {
+      "dsh": ">=0.2.0-rc.2",
+      "dshReleases": {
+        "0.2.0-rc.2": "compatible"
+      },
+      "dshOperations": {
+        "0.2.0-rc.2": {
+          "install": "passed",
+          "start": "passed",
+          "uninstall": "passed",
+          "rollback": "untested"
+        }
+      },
+      "profiles": [
+        "web",
+        "desktop"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

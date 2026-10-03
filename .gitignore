@@ -1,0 +1,18 @@
+# dependencies
+node_modules/
+
+# build/test scratch — the harness page and its cached React are regenerated
+# by `node test/build-harness.mjs`, and the screenshots are read by eye only
+test/.cache/
+
+# manifest backups written by tools/manifest_edit.py before each edit
+package.json.bak-*
+*.bak-*
+
+# logs and editor/OS noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
