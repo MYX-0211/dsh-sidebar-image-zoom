@@ -11,7 +11,7 @@ reaches the bottom edge, and even then the zoom is centred on the pane, not on
 what you are looking at. There is no way to pan at all. This plugin replaces
 that renderer outright.
 
-![Zooming into a figure in the sidebar](docs/screenshot-zoom.png)
+![Fit to the pane — the whole figure, the state you start in](docs/screenshot-fit.png)
 
 ## Gestures
 
@@ -28,7 +28,7 @@ that renderer outright.
 The readout tracks the live scale. A manual zoom belongs to you: it survives
 pane resizes, and only `适应窗口` or opening a different image returns to fit.
 
-![Panning across the same figure](docs/screenshot-pan.png)
+![Wheel-zoomed to 182% on the cursor — the small print is finally readable](docs/screenshot-zoom.png)
 
 ## Install
 
