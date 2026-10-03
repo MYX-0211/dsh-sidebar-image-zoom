@@ -1,80 +1,62 @@
+[English](README.en.md) · **简体中文**
+
 # dsh-sidebar-image-zoom
 
-Pointer-anchored wheel zoom and drag-to-pan for images opened in the DeepSeek
-Harness right sidebar.
+DSH 右侧边栏的图片查看器：**滚轮以光标为锚点缩放 + 拖拽平移**。
 
-DSH's built-in image pane fits a bitmap to the pane and stops there. The only
-controls are a `+` / `−` / `适应窗口` strip that stays hidden until the pointer
-reaches the bottom edge, and even then the zoom is centred on the pane, not on
-what you are looking at. There is no way to pan at all. This plugin replaces
-that renderer outright.
+DSH 内置的图片面板只会把位图缩放到适应面板，就到此为止。它唯一的控件是一条 `+` / `−` / `适应窗口` 浮条，鼠标不挪到底边根本不出现；而且缩放始终以面板中心为锚点，你正在看的地方不会跟着你走。**完全没有拖拽平移。** 本插件直接顶替掉这个渲染器。
 
-![Zooming into a figure in the sidebar](docs/screenshot-zoom.png)
+![在侧边栏里放大查看一张图](docs/screenshot-zoom.png)
 
-## Gestures
+## 手势
 
-| Gesture | Result |
+| 手势 | 效果 |
 | --- | --- |
-| Wheel | Zoom, anchored on the pixel under the cursor |
-| Drag | Pan — pointer capture, so the cursor may leave the pane mid-drag |
-| Double-click | Toggle fit ⇄ 1:1 |
-| `F` / `Esc` | Fit to the pane |
+| 滚轮 | 缩放，锚定在光标下的那个像素 |
+| 拖拽 | 平移——用 pointer capture，光标可以中途移出面板 |
+| 双击 | 在 适应窗口 ⇄ 1:1 之间切换 |
+| `F` / `Esc` | 适应窗口 |
 | `1` | 100% |
-| `+` `-` `=` `_` | Step the zoom about the centre |
-| Control strip | Always visible: `适应窗口` · `1:1` · `−` · readout · `+` |
+| `+` `-` `=` `_` | 以中心为锚点步进缩放 |
+| 底部控制条 | 常驻显示：`适应窗口` · `1:1` · `−` · 百分比 · `+` |
 
-The readout tracks the live scale. A manual zoom belongs to you: it survives
-pane resizes, and only `适应窗口` or opening a different image returns to fit.
+百分比读数跟着实时比例走。自己滚出来的缩放归你自己：**面板尺寸变化不会把它重置**，只有点「适应窗口」或换一张图才会回到适应。
 
-## Install
+![拖拽平移](docs/screenshot-pan.png)
 
-The plugin is not published to npm, so DSH's *Plugins → Add plugin* flow
-(which resolves a registry spec) will not find it. Clone it next to your
-profile and stage it by hand — or on Windows use the bundled script.
+## 安装
+
+插件没有发布到 npm，所以 DSH 的 *插件 → 添加插件* 流程（它按 registry 规格解析包名）找不到它。把仓库克隆到 profile 旁边，然后手动 stage——Windows 上可以直接用仓库自带的脚本。
 
 ```bash
 git clone https://github.com/MYX-0211/dsh-sidebar-image-zoom.git
 ```
 
-Then place the package where your profile can resolve it (typically
-`<profile>/node_modules/dsh-sidebar-image-zoom/`), add it to the profile's
-`dependencies` and to `dsh.profile.bundles` in the profile `package.json`, and
-restart DSH.
+然后把包放到你的 profile 能解析到的位置（一般是 `<profile>/node_modules/dsh-sidebar-image-zoom/`），在 profile 的 `package.json` 里同时加进 `dependencies` 和 `dsh.profile.bundles`，重启 DSH。
 
-`install.ps1` / `uninstall.ps1` do exactly that for the standard profile
-location, through `tools/manifest_edit.py`. That script edits the manifest
-line by line instead of doing a JSON round-trip, so untouched formatting is
-preserved, and it writes a timestamped `package.json.bak-*` before each write.
+`install.ps1` / `uninstall.ps1` 就是替你做完这些事（针对标准 profile 路径），底层是 `tools/manifest_edit.py`。那个脚本**逐行编辑** manifest 而不是做 JSON round-trip，所以没被碰过的部分格式原样保留；每次写盘前都会先落一个带时间戳的 `package.json.bak-*`。
 
 ```powershell
-# Windows, if the execution policy blocks .ps1 files, read the script inline
+# Windows：如果执行策略拦 .ps1，用这种方式读取并执行
 Invoke-Expression ([IO.File]::ReadAllText(".\install.ps1", [Text.Encoding]::UTF8))
 Invoke-Expression ([IO.File]::ReadAllText(".\uninstall.ps1", [Text.Encoding]::UTF8))
 ```
 
-Both directions are idempotent, and an uninstall → install round trip was
-verified byte-identical to the original manifest.
+两个方向都是幂等的；卸载 → 重装的往返比对过，与原始 manifest **逐字节相同**。
 
-**DSH loads plugins at boot, so restart it once after installing.**
+**DSH 在 boot 时加载插件，所以装完要重启一次。**
 
-## How it hooks in
+## 接管原理
 
-DSH lets a plugin own a document renderer through `ctx.documentPreviews`. The
-match order is
+DSH 允许插件通过 `ctx.documentPreviews` 认领某种文件的渲染器。匹配排序是
 
 ```js
 right.rank - left.rank || right.length - left.length || left.order - right.order
 ```
 
-where `rank` is `priority === "builtin" ? 0 : 1`. The built-in bitmap viewer
-registers itself with `priority: "builtin"`, so **any other priority value
-outranks it**. This plugin registers `priority: "extension"` over the same
-suffix list and therefore takes over the image pane outright — no configuration,
-no user-facing switch.
+其中 `rank` 为 `priority === "builtin" ? 0 : 1`。内置位图查看器用 `priority: "builtin"` 注册自己，所以**任何别的 priority 值都排在它前面**。本插件用 `priority: "extension"` 注册同样的后缀列表，于是直接接管图片面板——不用配置，也不给用户留开关。
 
-The body itself has to be registered in the keyed child slot
-`sidebar.right.tab.document` under exactly the same key as the registry id,
-because the host resolves it with `entryKey: selected.id`:
+正文必须注册进 keyed 子槽 `sidebar.right.tab.document`，且 key 与注册表 id 完全一致，因为宿主是用 `entryKey: selected.id` 反查的：
 
 ```js
 ctx.documentPreviews.register({ id: BODY_ID, extensions, binaryExtensions,
@@ -83,103 +65,55 @@ ctx.slots.inject("sidebar.right.tab.document", () =>
   ctx.slots.register({ name: "sidebar.right.tab.document", key: BODY_ID }, Body))
 ```
 
-Two details that are easy to get wrong:
+两个容易写错的点：
 
-- `binaryExtensions` must be a subset of `extensions`, and SVG is deliberately
-  left out of it so that the plain-text renderer stays available for reading
-  vector source.
-- Both registrations are owned by `ctx.effect`, and the body is wrapped in an
-  error boundary. A throw from a renderer blanks the entire sidebar panel, not
-  just the tab — the boundary turns that into a message and leaves the tab's
-  renderer dropdown as the way out.
+- `binaryExtensions` 必须是 `extensions` 的子集，而且 SVG **故意**不放进 `binaryExtensions`，这样纯文本渲染器仍然可以用来读矢量源码。
+- 两处注册都由 `ctx.effect` 持有，正文外面套了 error boundary。渲染器抛错会把**整个侧栏面板**变空白，而不只是当前标签页——这个 boundary 把它变成一条提示，并保留标签页顶部的渲染器下拉菜单作为退路。
 
-There is no build step. `lib/client.js` is hand-written and self-registers via
-`window.__ModuleLoader__.load`; only `react` is required, and it comes from the
-host.
+没有构建步骤。`lib/client.js` 是手写的，通过 `window.__ModuleLoader__.load` 自注册；只依赖 `react`，由宿主提供。
 
-Failures degrade to a message rather than an empty pane: bytes that match no
-known signature, bytes whose suffix promises a format they are not, and a tab
-that has not received its content yet each get their own short note.
+出错时降级为提示而不是空面板：字节不匹配任何已知签名、后缀承诺的格式与实际字节不符、以及标签页还没拿到内容，各自显示自己的短提示。
 
-## Files
+## 文件
 
-| Path | Role |
+| 路径 | 作用 |
 | --- | --- |
-| `lib/client.js` | The whole plugin (browser half) |
-| `lib/index.js` | Empty host half — satisfies the bundle contract |
-| `cordis.patch.yml` | Mounts the package. The `id` must stay `sidebar-image-zoom` — mounting the same package twice under one tree fails the boot |
-| `tools/manifest_edit.py` | Line-based profile manifest editor |
-| `install.ps1`, `uninstall.ps1` | Stage the package and edit the manifest |
-| `test/build-harness.mjs` | Builds a self-contained harness page |
-| `test/verify.mjs` | Drives that page with a real browser |
+| `lib/client.js` | 插件全部实现（浏览器半） |
+| `lib/index.js` | 空的宿主半——只为满足 bundle 契约 |
+| `cordis.patch.yml` | 挂载用。`id` 必须保持 `sidebar-image-zoom`——同一个包挂两次会让整棵插件树 boot 失败 |
+| `tools/manifest_edit.py` | 逐行的 profile manifest 编辑器 |
+| `install.ps1`、`uninstall.ps1` | stage 包并改写 manifest |
+| `test/build-harness.mjs` | 生成自包含的 harness 页面 |
+| `test/verify.mjs` | 用真实浏览器驱动那个页面 |
 
-## Testing
+## 测试
 
-The suite loads `lib/client.js` **verbatim** into a page that fakes only what
-DSH itself provides — `window.__ModuleLoader__`, `require`, and a recording
-cordis context — then mounts the registered body and drives it with real
-mouse and wheel events through Edge or Chrome. The test image is drawn at run
-time with canvas, so no binary fixtures are committed.
+套件把 `lib/client.js` **原文**载入一个只伪造 DSH 自己那部分的页面——`window.__ModuleLoader__`、`require`、以及一个记录型 cordis 上下文——然后挂载注册好的正文，用真实的鼠标与滚轮事件通过 Edge 或 Chrome 驱动它。测试图在运行时用 canvas 画出来，所以**不提交任何二进制 fixture**。
 
 ```bash
 npm install
 npm test
 ```
 
-`puppeteer-core` is used rather than `puppeteer` so that installing the dev
-dependency does not pull down a second Chromium. The runner finds a browser at
-`PUPPETEER_EXECUTABLE_PATH`, then the usual Edge and Chrome locations, then the
-usual Linux and macOS paths. Point it somewhere explicitly if yours lives
-elsewhere:
+用 `puppeteer-core` 而不是 `puppeteer`，是为了让安装 devDependency 时不要再拖一个 Chromium 下来。运行器按 `PUPPETEER_EXECUTABLE_PATH` → Edge/Chrome 常见路径 → Linux/macOS 常见路径的顺序找一个浏览器。你的浏览器在别处就显式指过去：
 
 ```bash
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium npm test
 ```
 
-A full run is 30 assertions. The two that carry the point of the plugin:
+完整一轮是 30 条断言。最能说明问题的是这两条：
 
 ```
 PASS  zoom is anchored at the cursor            — image point under cursor moved 0.00px
 PASS  drag pans by the pointer delta            — moved (-140.0, -90.0), expected (-140, -90)
 ```
 
-It also asserts the registration contract (claimed suffixes, `binaryExtensions`
-⊆ `extensions`, `priority !== "builtin"`, `loading: "bytes-complete"`, slot key
-=== registry id, both registrations owned by effects), the control strip, the
-double-click toggle from a pinned precondition, that a corrupt file reports a
-decode failure instead of blanking, that fallback messages stay inside their
-pane, and that nothing reaches the console.
+它同时断言注册契约（认领的后缀、`binaryExtensions` ⊆ `extensions`、`priority !== "builtin"`、`loading: "bytes-complete"`、槽位 key === 注册表 id、两处注册都由 effect 持有）、控制条、从固定前置状态出发的双击切换、损坏文件报解码失败而不是留空面板、回退提示留在本面板内、以及 console 干净。
 
-## Compatibility
+## 兼容性
 
-Built and tested against DSH `0.2.0-rc.2` on the `desktop` profile. It reaches
-into DSH internals — the slot name, the registry shape, and the `builtin`
-rank — so a release that changes any of those can break it. When that happens
-the symptom is a blank sidebar panel, and the fix is to disable the bundle and
-reload; the fault will not take the rest of the UI with it.
+针对 DSH `0.2.0-rc.2`、`desktop` profile 构建并测试。它伸手进了 DSH 内部——槽位名、注册表结构、以及 `builtin` 的 rank 语义——所以 DSH 任何一次改动都可能让它失效。失效的表现是侧栏面板变空白，处理方式是禁用该 bundle 后重新加载；这个故障不会拖垮其余 UI。
 
-## License
+## 许可
 
-MIT — see [LICENSE](LICENSE).
-
----
-
-## 中文说明
-
-DSH 右侧边栏打开图片时，内置查看器只会把图缩放到适应面板，控制条要鼠标移到底边才浮现，而且缩放始终以面板中心为锚点，**完全没有拖拽平移**。本插件顶替掉这个渲染器：
-
-- **滚轮**：以光标下的那个像素为锚点缩放
-- **拖拽**：平移（用 pointer capture，光标可以移出面板）
-- **双击**：在「适应窗口」与「1:1」之间切换
-- `F` / `Esc` 适应窗口，`1` 回到 100%，`+` / `-` 步进缩放
-- 底部控制条常驻显示当前百分比
-
-自己滚出来的缩放不会被面板尺寸变化重置，只有点「适应窗口」或换图才会回到适应。
-
-![拖拽平移](docs/screenshot-pan.png)
-
-**接管方式**：内置图片渲染器注册的 `priority` 是 `"builtin"`，排序时 rank 为 0，所以任何别的 priority 值都排在它前面。本插件用 `priority: "extension"` 加同样的后缀列表，直接顶掉它，不需要任何配置。正文必须按相同的 key 注册进 `sidebar.right.tab.document` 这个 keyed 子槽——宿主是用 `entryKey: selected.id` 反查的。
-
-**安装**：插件没有发布到 npm，所以 DSH 的「插件 → 添加插件」找不到它。把仓库克隆到 profile 能解析的位置（一般是 `<profile>/node_modules/dsh-sidebar-image-zoom/`），在 profile 的 `package.json` 里同时加进 `dependencies` 和 `dsh.profile.bundles`，然后**重启 DSH**（插件在 boot 时加载）。Windows 上可以直接用仓库自带的 `install.ps1`。
-
-**测试**：`npm install && npm test`，30 项断言全过，其中最关键的两条是「滚轮缩放锚定在光标下的像素」和「拖拽距离与指针位移一致」。
+MIT —— 见 [LICENSE](LICENSE)。
